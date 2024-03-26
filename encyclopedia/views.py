@@ -17,7 +17,9 @@ def encyclopedia(request, TITLE):
 
     # Check if content is None
     if content is None:
-        return HttpResponse("Entry not found")
+
+        return render(request, "encyclopedia/pages.html",
+                      {"title": TITLE, "content": html_content})
 
     html_content = markdown2.markdown(content)
 
