@@ -4,6 +4,7 @@ import markdown2
 from django import forms
 from django.urls import reverse, include
 import re
+from random import randint
 
 from . import util
 
@@ -85,3 +86,40 @@ def newPage(request):
     return render(request, "encyclopedia/newPage.html", {
         "form": NewTaskForm()
     })
+
+
+def editPage(request, title):
+    content = util.get_entry(title)
+
+    class EditTaskForm(forms.Form):
+        MarkdownContent = forms.CharField(
+            widget=forms.Textarea, label="Content")
+
+    if request.method == "POST":
+        form = EditTaskForm(request.POST)
+        if form.is_valid():
+            content = form.cleaned_data["MarkdownContent"]
+            util.save_entry(title, content)
+            html_content = markdown2.markdown(content)
+
+            return render(request, "encyclopedia/pages.html",
+                          {"title": title, "content": html_content})
+    else:
+        form = EditTaskForm(initial={'MarkdownContent': content})
+
+    return render(request, "encyclopedia/newPage.html", {
+        "form": form,
+        "title": title,
+    })
+
+
+def randomPage(request):
+
+    pageList = util.list_entries()
+    randomNumber = randint(0, len(pageList))
+
+    title = pageList[randomNumber]
+    content = util.get_entry(pageList[randomNumber])
+
+    return render(request, "encyclopedia/pages.html",
+                  {"title": title, "content": content})
