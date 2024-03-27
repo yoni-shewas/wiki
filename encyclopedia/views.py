@@ -107,19 +107,23 @@ def editPage(request, title):
     else:
         form = EditTaskForm(initial={'MarkdownContent': content})
 
-    return render(request, "encyclopedia/newPage.html", {
+    return render(request, "encyclopedia/editPage.html", {
         "form": form,
         "title": title,
     })
 
 
 def randomPage(request):
-
     pageList = util.list_entries()
-    randomNumber = randint(0, len(pageList))
 
+    if not pageList:
+        return render(request, "encyclopedia/error.html",
+                      {"error_message": "No pages available."})
+
+    randomNumber = randint(0, len(pageList) - 1)
     title = pageList[randomNumber]
-    content = util.get_entry(pageList[randomNumber])
+    content = util.get_entry(title)
+    html_content = markdown2.markdown(content)
 
     return render(request, "encyclopedia/pages.html",
-                  {"title": title, "content": content})
+                  {"title": title, "content": html_content})
