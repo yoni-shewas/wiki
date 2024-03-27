@@ -1,6 +1,8 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 import markdown2
+from django import forms
+from django.urls import reverse, include
 import re
 
 from . import util
@@ -56,3 +58,30 @@ def query(request):
 
     return render(request, "encyclopedia/pages.html",
                   {"title": title, "content": content})
+
+
+class NewTaskForm(forms.Form):
+    title = forms.CharField(label="Title")
+    MarkdownContent = forms.CharField(
+        widget=forms.Textarea, label="Content")
+
+
+def newPage(request):
+
+    if request.method == "POST":
+        form = NewTaskForm(request.POST)
+        if form.is_valid():
+            title = form.cleaned_data["title"]
+            content = form.cleaned_data["MarkdownContent"]
+            isTitle = util.get_entry(title)
+            if isTitle is None:
+                util.save_entry(title, content)
+                html_content = markdown2.markdown(content)
+
+                return render(request, "encyclopedia/pages.html",
+                              {"title": title, "content": html_content})
+            else:
+                return HttpResponseForbidden("The requested Create was Forbidden duplicate exist.")
+    return render(request, "encyclopedia/newPage.html", {
+        "form": NewTaskForm()
+    })
